@@ -1,0 +1,194 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <windows.h>  
+#include <GL/gl.h>
+#include <GL/glut.h>
+
+static GLfloat spin = 0.0;
+static GLfloat default_rate = 1;
+static BOOL direction = TRUE;
+static int ydiff = 0;
+static int yhome = 0;
+static int xdiff = 0;
+static int xhome = 0;
+static GLfloat colors[3] = {1.0f, 0.5f, 1.0f };
+
+void init(void)
+{
+	glClearColor(colors[0]*0.5, colors[1]*0.5, colors[2]*0.5, 0.0);
+	glShadeModel(GL_FLAT);
+}
+
+static void polygon_draw(void)
+{
+	glBegin(GL_POLYGON);
+	glVertex3f(-25.0, -25.0, 0.0);
+	glColor3d(0, 1, 0);
+	glVertex3f(-25.0, 25.0, 0.0);
+	glColor3d(1, 0.5, 0);
+	glVertex3f(0.0, 25.0, 0.0);
+	glColor3f(0.5f, 0.35f, 0.05f);
+	glVertex3f(20, 0, 0.0);
+	glColor3d(1, 0, 1);
+	glVertex3f(0.0, -25.0, 0.0);
+	glEnd();
+
+}
+/*
+void keyboardCallBack(unsigned char key, int x, int y)
+{
+	switch (key) {
+	case 'c':
+		colors[0] = 0.0f;
+		colors[1] = 1.0f;
+		colors[2] = 1.0f;
+		glutPostRedisplay();
+		break;
+	case 'm':
+		colors[0] = 1.0f;
+		colors[1] = 0.0f;
+		colors[2] = 1.0f;
+		glutPostRedisplay();
+		break;
+	case 'y':
+		colors[0] = 1.0f;
+		colors[1] = 1.0f;
+		colors[2] = 0.0f;
+		glutPostRedisplay();
+		break;
+	case 'w':
+		colors[0] = 1.0f;
+		colors[1] = 1.0f;
+		colors[2] = 1.0f;
+		glutPostRedisplay();
+		break;
+	default:
+		break;
+	}
+}
+
+*/
+void display(void)
+{
+	GLfloat intensity = 0.5;
+	if (xdiff)
+	{
+		intensity = 0.5 - ((GLfloat)xdiff/500);
+	}
+	printf("inten = %f\t", intensity);
+	glClearColor(colors[0] * intensity, colors[1] * intensity, colors[2] * intensity, 0.0);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	glPushMatrix();
+	glRotatef(spin, 0.0, 0.0, 1.0);
+	glColor3f(1, 0.7, 0.5);
+
+	polygon_draw();
+
+	glPopMatrix();
+	glutSwapBuffers();
+}
+
+void spinDisplay(void)
+{
+	GLfloat offset;
+
+		offset = default_rate +(ydiff * 0.004);
+		if (offset < 0)
+			offset = 0;
+
+	if (direction)	
+	{
+		spin = spin + offset;
+	}
+	else
+	{
+		spin = spin - offset;
+	}
+	if (spin > 360.0)
+		spin = spin - 360.0;
+	if (spin < -360.0)
+		spin = spin + 360.0;
+	glutPostRedisplay();
+}
+void reshape(int w, int h)
+{
+	glViewport(0, 0, (GLsizei)w, (GLsizei)h);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-50.0, 50.0, -50.0, 50.0, -1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+}
+void mouse(int button, int state, int x, int y)
+{
+	if ((button == GLUT_LEFT_BUTTON) && (state == GLUT_DOWN))
+	{
+		direction = TRUE;
+		yhome = y;
+		xhome = x;
+
+		printf("diff y --> %d, %d)\n", ydiff, ydiff);
+		printf("diff x --> %d, %d)\n", xdiff, xdiff);
+
+		glutIdleFunc(spinDisplay);
+	}
+	else if ((button == GLUT_RIGHT_BUTTON) && (state == GLUT_DOWN))
+	{
+		direction = FALSE;
+		yhome = y;
+		xhome = x;
+
+		glutIdleFunc(spinDisplay);
+
+	}
+	else
+	{
+		xhome = 0;
+		xdiff = 0;
+		yhome = 0;
+		ydiff = 0;
+		glutIdleFunc(NULL);
+	}
+}
+//======================================================
+// MOUSE MOTION CALLBACK ROUTINE 
+//======================================================
+void motionCallBack(int x, int y)
+{
+	printf("x , y  %d, %d)\n", x, y);
+
+	//Set square's location to current mouse position
+	xdiff = -(x - xhome);
+	ydiff = -(y - yhome);
+	printf("diff %d, %d)\n", ydiff, ydiff);
+
+	glutIdleFunc(spinDisplay);
+}
+
+
+/*
+* Request double buffer display mode.
+* Register mouse input callback functions
+*/
+int main(int argc, char** argv)
+{
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
+	glutInitWindowSize(250, 250);
+	glutInitWindowPosition(100, 100);
+	glutCreateWindow(argv[0]);
+	glutCreateWindow("Tharun Battula - Assignement 2");
+
+	init();
+	glutDisplayFunc(display);
+	glutReshapeFunc(reshape);
+	glutMouseFunc(mouse);
+	//glutKeyboardFunc(keyboardCallBack);
+	glutMotionFunc(motionCallBack);
+
+	glutMainLoop();
+	return 0;
+}
